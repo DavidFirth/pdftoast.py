@@ -60,3 +60,8 @@ Writing the half-pages to the output file...
 Your new PDF file is at /home/david/Downloads/CF2008-toasted.pdf.
 ```
 A copy of both the original and `-toasted` PDF files can be found in the `Example` folder of the `pdftoast.py` repository at [https://github.com/DavidFirth/pdftoast.py](https://github.com/DavidFirth/pdftoast.py).
+
+## Acknowledgment
+
+This script uses ideas from an earlier script published by Niall at
+[https://github.com/nmoran/landscape-pdf](https://github.com/nmoran/landscape-pdf).  Niall's contribution is acknowledged with gratitude.
