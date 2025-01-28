@@ -39,15 +39,16 @@ The mechanism for installing these things is system-dependent, so no more will b
 
 ## Example
 
-One of my own papers is in my Downloads folder as `CF2008.pdf`.  That file can be processed by `pdftoast.py` as follows:
+One of my own recent papers is in my Downloads folder (downloaded from [https://arxiv.org/abs/2312.10548](https://arxiv.org/abs/2312.10548)) 
+as `2312.10548v1.pdf`.  That file can be processed by `pdftoast.py` as follows:
 ```
-pdftoast.py -v CF2008.pdf
+pdftoast.py -v 2312.10548v1.pdf
 ```
 (Note that `-v` is just a convenient shorthand for `--verbose`.)
 
 The output then seen in the terminal is this:
 ```
-/home/david/Downloads$ pdftoast.py -v CF2008.pdf
+/home/david/Downloads$ pdftoast.py -v 2312.10548v1.pdf
 --- This is pdftoast.py version 0.1 ---
 Adding marginal page-number annotations, top and bottom...
 ...DONE
@@ -57,7 +58,7 @@ Splitting the pages...
 ...DONE
 Writing the half-pages to the output file...
 ...DONE
-Your new PDF file is at /home/david/Downloads/CF2008-toasted.pdf.
+Your new PDF file is at /home/david/Downloads/2312.10548v1-toasted.pdf.
 ```
 A copy of both the original and `-toasted` PDF files can be found in the `Example` folder of the `pdftoast.py` repository at [https://github.com/DavidFirth/pdftoast.py](https://github.com/DavidFirth/pdftoast.py).
 
