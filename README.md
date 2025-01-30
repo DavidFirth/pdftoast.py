@@ -6,8 +6,9 @@ This is a Python script to split all pages of a PDF file for viewing on landscap
 
 The two applications that have emerged in my own work are the following.
 
-1.  Discussing a paper with students or colleagues, using a landscape-oriented screen to display the paper (online, or on my desk, or with a projector).  The landscape-oriented PDF made by `pdftoast.py` makes much better use of the screen space, with no scrolling and with page numbers always visible.
-2.  Uploading a paper to a tablet device for reading and/or annotation, with text still displayed at a decent size and with no scrolling needed.  In fact, writing this script was motivated by my having started to play with a _reMarkable 2_ tablet, whose e-ink display makes scrolling a severe annoyance due to its constant refreshing of the screen while scrolling.  I now find reading and annotating PDFs on the _reMarkable 2_ much easier --- fun, even! --- when the PDF has been processed by `pdftoast.py` and is viewed in landscape mode on the tablet.  On the _reMarkable 2_, that view of a document has the text at a size that's slightly bigger than it would be in a printed copy of the paper.  And the right margin gives enough space, still, for short annotations --- with space for longer annotations still available by scrolling.  (All testing on the _reMarkable 2_ has been done with that tablet's software version 3.16.) 
+
+1.  Uploading a paper to a _reMarkable 2_ or similar tablet device for reading and/or annotation, with text displayed at a good size and with no scrolling needed.  In fact, writing this script was motivated by my having started to play with a _reMarkable 2_, whose e-ink display makes scrolling a severe annoyance due to its constant refreshing of the screen while scrolling.  I now find reading and annotating PDFs on the _reMarkable 2_ much easier --- fun, even! --- when the PDF has been processed by `pdftoast.py` and is viewed in landscape mode on the tablet.  On the _reMarkable 2_, that view of a document has the text at a size that's slightly bigger than it would be in a printed copy of the paper.  And the right margin gives enough space, still, for short annotations --- with space for longer annotations still available by scrolling.  (All testing on the _reMarkable 2_ has been done with that tablet's software version 3.16.)
+2.  Discussing a paper with students or colleagues, using a landscape-oriented screen in presentation mode to display the paper (online, or on my desk, or with a projector).  The landscape-oriented PDF made by `pdftoast.py` makes decent use of the screen space, with no scrolling and with page numbers always visible.
 
 ## Using the script
 
@@ -65,4 +66,4 @@ A copy of both the original and `-toasted` PDF files can be found in the `Exampl
 ## Acknowledgment
 
 This script uses ideas from an earlier script published by Niall at
-[https://github.com/nmoran/landscape-pdf](https://github.com/nmoran/landscape-pdf).  Niall's contribution is acknowledged with gratitude.
+[https://github.com/nmoran/landscape-pdf](https://github.com/nmoran/landscape-pdf).  Niall's contribution (inspiration!) is acknowledged with gratitude.
