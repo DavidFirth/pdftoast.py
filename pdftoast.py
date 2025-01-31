@@ -54,6 +54,7 @@ import os
 import pypdf as pdf  ## tested to work with pypdf 5.1.0
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import FreeText
+from pypdf.annotations import Line
 import subprocess
 import tempfile
 
@@ -99,6 +100,13 @@ def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
         )
         annotation_bottom.flags = 4
         writer.add_annotation(page_number = pn, annotation = annotation_bottom)
+        annotation_overlap = Line(
+            p1 = (bb[2]-3, bb[3]/2+15),
+            p2 = (bb[2]-3, bb[3]/2-25),
+            rect = (bb[2]-3, bb[3]/2+15, bb[2]-3, bb[3]/2-25)
+        )
+        annotation_overlap.flags = 4
+        writer.add_annotation(page_number = pn, annotation = annotation_overlap)
     ## We will write out the resultant PDF to a temporary file:
     temp1 = tempfile.NamedTemporaryFile(suffix = '.pdf', delete = not debug)
     if debug:
