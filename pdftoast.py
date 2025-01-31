@@ -47,7 +47,7 @@ License: MIT License
 NO WARRANTY OF FITNESS FOR ANY PURPOSE  
 """
 
-version = 0.1
+version = 0.2
 
 import argparse
 import os
