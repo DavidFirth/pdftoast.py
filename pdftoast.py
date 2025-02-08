@@ -29,13 +29,13 @@ the PDF file to be processed must end in `.pdf`.
 Examples:
 1. Process `myfile.pdf` to new file `myfile-toasted.pdf`,
 with verbose output:
-    `python pdftoast.py -v myfile.pdf`
+      `python pdftoast.py -v myfile.pdf`
    Alternatively, if `pdftoast.py` is in your path:
-    `pdftoast.py -v myfile.pdf`
+      `pdftoast.py -v myfile.pdf`
 2. Get help on usage:
-    `python pdftoast.py -h`
+      `python pdftoast.py -h`
    Or, if `pdftoast.py` is in your path,
-    `pdftoast.py -h`
+      `pdftoast.py -h`
 
 Script written by David Firth, maintained at
 https://github.com/DavidFirth/pdftoast.py
@@ -47,7 +47,7 @@ License: MIT License
 NO WARRANTY OF FITNESS FOR ANY PURPOSE  
 """
 
-version = 0.2
+version = 0.3
 
 import argparse
 import os
@@ -80,13 +80,28 @@ def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
     number_pages = len(reader.pages)
     pages = reader.pages
     bb = pages[0].cropbox  ## assumed same for all pages
+    page_width = bb[2]
+    page_height = bb[3]
+    half_height = bb[3] / 2
+    crop_left = 35
+    ## no cropping is done on the right margin!
+    crop_top_max = 35
+    crop_foot_max = crop_top_max - 10  ## usually leaves page number in footer
+    ## Those maximum crop values will be reduced, depending on the input page size. 
+    cropped_width = page_width - crop_left
+    aspect_ratio = 209 / 156
+    ## The reMarkable2 landscape screen is ~209x157mm, so 209:156 should always fit.
+    crop_reduction = (cropped_width / aspect_ratio) - (page_height / 2) + 10
+    crop_top = max(0, crop_top_max - crop_reduction)
+    crop_foot = max(0, crop_foot_max - crop_reduction)
     for pn in range(number_pages):
         pagenumber_text = " " + str(int(1 + pn)) + "/" + str(number_pages)
         page = pages[pn]
         writer.add_page(page)
         annotation_top = FreeText(
             text = pagenumber_text,
-            rect = (bb[2]-39, bb[3]-78, bb[2]+1, bb[3]-60),
+            rect = (page_width - 39, page_height - crop_top - 43,
+                    page_width + 1, page_height - crop_top - 25),
             border_color = pagenumbers_colour,
             background_color = "ffffff"
         )
@@ -94,16 +109,16 @@ def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
         writer.add_annotation(page_number = pn, annotation = annotation_top)
         annotation_bottom = FreeText(
             text = pagenumber_text,
-            rect=(bb[2]-40, 49, bb[2]+1, 30),
+            rect=(page_width - 40, crop_foot + 22, page_width + 1, crop_foot + 3),
             border_color = "ffffff",
             background_color = pagenumbers_colour
         )
         annotation_bottom.flags = 4
         writer.add_annotation(page_number = pn, annotation = annotation_bottom)
         annotation_overlap = Line(
-            p1 = (bb[2]-3, bb[3]/2+15),
-            p2 = (bb[2]-3, bb[3]/2-25),
-            rect = (bb[2]-3, bb[3]/2+15, bb[2]-3, bb[3]/2-25)
+            p1 = (page_width - 3, half_height + 15),
+            p2 = (page_width - 3, half_height - 25),
+            rect = (page_width - 3, half_height + 15, page_width - 3, half_height - 25)
         )
         annotation_overlap.flags = 4
         writer.add_annotation(page_number = pn, annotation = annotation_overlap)
@@ -131,7 +146,8 @@ def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
                            '-dNOPAUSE', '-dBATCH', '-dPreserveAnnots=false']
     if not debug:
         ghostscript_options.insert(0, '-dQUIET')
-    subprocess.call(['gs'] + ghostscript_options + ['-sOutputFile='+temp2.name, temp1.name])
+    subprocess.call(['gs'] + ghostscript_options +
+                    ['-sOutputFile=' + temp2.name, temp1.name])
     if verbose:
         print("...DONE")
 
@@ -144,9 +160,11 @@ def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
     for pn in range(number_pages):
         page_top = reader_top.pages[pn]
         page_bottom = reader_bottom.pages[pn]
-        page_top.cropbox = pdf.generic.RectangleObject([35, (bb[3]/2)-25, bb[2], bb[3]-35])
+        page_top.cropbox = pdf.generic.RectangleObject([crop_left, half_height - 25,
+                                                        page_width, page_height -crop_top])
         writer2.add_page(page_top)
-        page_bottom.cropbox = pdf.generic.RectangleObject([35, 25, bb[2], (bb[3]/2)+15])
+        page_bottom.cropbox = pdf.generic.RectangleObject([crop_left, crop_foot,
+                                                           page_width, half_height + 15])
         writer2.add_page(page_bottom)
     if verbose:
         print("...DONE")
