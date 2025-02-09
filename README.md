@@ -20,11 +20,15 @@ outlines the script's usage and options.  A typical command is like this:
 ```
 pdftoast.py --verbose mydocument.pdf -p 2-
 ```
-which will make a new PDF document named `mydocument-toasted.pdf` (in the same folder as `mydocument.pdf`).  The `--verbose` switch is optional; if used, it gives a running commentary on progress.  The `-p` argument is optionally used to specify a page range to select from the PDF document (in this case, the value `'2-'` means that pages 2 onwards are selected); only one page range is allowed, with its start and end page numbers always separated by `-`.
+which will make a new PDF document named `mydocument-toasted.pdf` (in the same folder as `mydocument.pdf`).  
 
-If `pdftoast.py` is **not** in the user's path, the command would need to call Python explicitly like this:
+The `--verbose` switch is optional; if used, it gives a running commentary on progress. 
+
+The `-p` argument is optionally used to specify a page range to select from the PDF document, instead of processing the whole document.  (In this example, the value `'2-'` means that pages 2 onwards are selected.)  Only one such page range is allowed, with its start and end page numbers always separated by `-`.
+
+If `pdftoast.py` is **not** in the user's path, they would need to call Python explicitly like this:
 ```
-python pdftoast.py --verbose mydocument.pdf
+python /path/to/pdftoast.py --verbose mydocument.pdf
 ```
 
 ## System requirements
@@ -41,9 +45,9 @@ The mechanism for installing these things is system-dependent, so no more will b
 ## Example
 
 One of my own recent papers is in my Downloads folder (downloaded from [https://arxiv.org/abs/2312.10548](https://arxiv.org/abs/2312.10548)) 
-as `2312.10548v1.pdf`.  That file can be processed by `pdftoast.py` as follows:
+as `2312.10548v1.pdf`.  Selected pages 2--3 from that file are processed by `pdftoast.py` as follows:
 ```
-pdftoast.py -v 2312.10548v1.pdf
+pdftoast.py -v 2312.10548v1.pdf -p 2-3
 ```
 (Note that `-v` is just a convenient shorthand for `--verbose`.)
 
