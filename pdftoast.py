@@ -47,18 +47,19 @@ License: MIT License
 NO WARRANTY OF FITNESS FOR ANY PURPOSE  
 """
 
-version = 0.3
+version = 0.4
 
 import argparse
 import os
-import pypdf as pdf  ## tested to work with pypdf 5.1.0
+import pypdf as pdf
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import FreeText
 from pypdf.annotations import Line
 import subprocess
 import tempfile
+from shutil import which
 
-def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
+def number_and_split_pages(inputfile: str, pagespec : list, verbose: bool, debug: bool):
     """
     The main work is done by this function.
 
@@ -66,12 +67,15 @@ def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
     ----------
     inputfile : str
         the path to the PDF file that will be processed
+    pagespec : list
+        a list of two str values         
     verbose : bool
         provide commentary when run
     debug : bool
         keep temporary files and show their names; and also show
         Ghostscript errors and warnings
     """
+    
     if verbose:
         print("Adding marginal page-number annotations, top and bottom...")
     pagenumbers_colour = "009900"
@@ -79,6 +83,13 @@ def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
     writer = PdfWriter()
     number_pages = len(reader.pages)
     pages = reader.pages
+    if pagespec[0] == '':
+        pagespec[0] = '1'
+    pagespec[0] = int(pagespec[0]) - 1
+    if pagespec[1] == '':
+        pagespec[1] = str(number_pages)
+    pagespec[1] = int(pagespec[1])
+    pagerange = range(pagespec[0], pagespec[1])                           
     bb = pages[0].cropbox  ## assumed same for all pages
     page_width = bb[2]
     page_height = bb[3]
@@ -91,10 +102,11 @@ def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
     cropped_width = page_width - crop_left
     aspect_ratio = 209 / 156
     ## The reMarkable2 landscape screen is ~209x157mm, so 209:156 should always fit.
-    crop_reduction = (cropped_width / aspect_ratio) - (page_height / 2) + 10
+    crop_reduction = (cropped_width / aspect_ratio) - half_height + 10
     crop_top = max(0, crop_top_max - crop_reduction)
     crop_foot = max(0, crop_foot_max - crop_reduction)
-    for pn in range(number_pages):
+    for i in range(len(pagerange)):
+        pn = pagerange[i]
         pagenumber_text = " " + str(int(1 + pn)) + "/" + str(number_pages)
         page = pages[pn]
         writer.add_page(page)
@@ -106,7 +118,7 @@ def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
             background_color = "ffffff"
         )
         annotation_top.flags = 4  ## for "printable" annotation
-        writer.add_annotation(page_number = pn, annotation = annotation_top)
+        writer.add_annotation(page_number = i, annotation = annotation_top)
         annotation_bottom = FreeText(
             text = pagenumber_text,
             rect=(page_width - 40, crop_foot + 22, page_width + 1, crop_foot + 3),
@@ -114,14 +126,14 @@ def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
             background_color = pagenumbers_colour
         )
         annotation_bottom.flags = 4
-        writer.add_annotation(page_number = pn, annotation = annotation_bottom)
+        writer.add_annotation(page_number = i, annotation = annotation_bottom)
         annotation_overlap = Line(
             p1 = (page_width - 3, half_height + 15),
             p2 = (page_width - 3, half_height - 25),
             rect = (page_width - 3, half_height + 15, page_width - 3, half_height - 25)
         )
         annotation_overlap.flags = 4
-        writer.add_annotation(page_number = pn, annotation = annotation_overlap)
+        writer.add_annotation(page_number = i, annotation = annotation_overlap)
     ## We will write out the resultant PDF to a temporary file:
     temp1 = tempfile.NamedTemporaryFile(suffix = '.pdf', delete = not debug)
     if debug:
@@ -157,9 +169,9 @@ def number_and_split_pages(inputfile: str, verbose: bool, debug: bool):
     reader_top = PdfReader(temp2.name)
     reader_bottom = PdfReader(temp2.name)
     writer2 = PdfWriter()
-    for pn in range(number_pages):
-        page_top = reader_top.pages[pn]
-        page_bottom = reader_bottom.pages[pn]
+    for i in range(len(pagerange)): # range(len(reader_top.pages)):
+        page_top = reader_top.pages[i]
+        page_bottom = reader_bottom.pages[i]
         page_top.cropbox = pdf.generic.RectangleObject([crop_left, half_height - 25,
                                                         page_width, page_height -crop_top])
         writer2.add_page(page_top)
@@ -186,14 +198,17 @@ def main():
     Main function to parse command-line arguments and call the PDF processing function.
     """
     parser = argparse.ArgumentParser(description = \
-                "Splits all pages of a PDF file for viewing on landscape screens.  " + \
+                "Splits all pages of a PDF file for viewing on landscape screens.  " +
                 "Output is to a new file: the input PDF file is left unchanged.")
     parser.add_argument("inputfile", type = str, help = "path to the input PDF file")
+    parser.add_argument("-p", "--pagespec", type = str,
+                        help = "a page range such as '2-5' or '2-' or '-5' (default: '1-')",
+                        default = "1-")
     parser.add_argument("-v", "--verbose", action = 'store_true',
                         help = "provide brief commentary")
     parser.add_argument("-d", "--debug", action = 'store_true',
-                        help = "keep temporary files and show their names; " + \
-                               "and also show Ghostscript errors and warnings " + \
+                        help = "keep temporary files and show their names; " + 
+                               "and also show Ghostscript errors and warnings " + 
                                "in addition to brief commentary")
     args = parser.parse_args()
     verbose = args.verbose
@@ -202,7 +217,21 @@ def main():
         verbose = True
     if verbose:
         print("--- This is pdftoast.py version " + str(version) + " ---")
+    if which('gs') is None:
+        print("Aborting, because Ghostscript is not available in your path.  " +
+              "No output file written.")
+        os._exit(1)
+    pagespec = args.pagespec.split("-")
+    if (len(pagespec) == 1) & pagespec[0].isdigit():
+        possibly_meant = str(pagespec[0]) + "-" + str(pagespec[0])
+        print("Invalid page range specified: did you mean -p " + possibly_meant +
+              " (or equivalently --pp " + possibly_meant + ")?")
+        os._exit(1)
+    if len(pagespec) != 2:
+        print("Invalid page range specification: aborting now.")
+        os._exit(1)
     outputfile = number_and_split_pages(inputfile = os.path.abspath(args.inputfile),
+                                        pagespec = pagespec,
                                         verbose = verbose,
                                         debug = debug)
     return(outputfile)
@@ -210,6 +239,4 @@ def main():
 
 if __name__ == "__main__":
     main()        
-
-
 

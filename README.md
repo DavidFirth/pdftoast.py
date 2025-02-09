@@ -18,9 +18,9 @@ pdftoast.py --help
 ```
 outlines the script's usage and options.  A typical command is like this:
 ```
-pdftoast.py --verbose mydocument.pdf
+pdftoast.py --verbose mydocument.pdf -p 2-
 ```
-which will make a new PDF document named `mydocument-toasted.pdf` (in the same folder as `mydocument.pdf`).  The `--verbose` switch is optional; if used, it gives a running commentary on progress.
+which will make a new PDF document named `mydocument-toasted.pdf` (in the same folder as `mydocument.pdf`).  The `--verbose` switch is optional; if used, it gives a running commentary on progress.  The `-p` argument is optionally used to specify a page range to select from the PDF document (in this case, the value `'2-'` means that pages 2 onwards are selected); only one page range is allowed, with its start and end page numbers always separated by `-`.
 
 If `pdftoast.py` is **not** in the user's path, the command would need to call Python explicitly like this:
 ```
@@ -33,7 +33,7 @@ This script depends on having the following installed on your system:
 
 1. **Python** (tested to work with Python version 3.11.2) 
 2. A fairly recent version of the Python package **pypdf** (tested to work with pypdf version 5.1.0 --- and known _not_ to work with much earlier versions, nor with the now-deprecated package PyPDF2)
-3. Other python modules **argparse**, **os**, **subprocess** and **tempfile** (which versions should not matter much if at all)
+3. Other python modules **argparse**, **os**, **subprocess**, **tempfile** and **shutil** (which versions should not matter much if at all)
 4. **Ghostscript** (tested to work with Ghostscript version 10.00.0, and likely to work with more recent versions)
 
 The mechanism for installing these things is system-dependent, so no more will be said about that here.
