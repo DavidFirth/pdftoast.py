@@ -47,7 +47,7 @@ License: MIT License
 NO WARRANTY OF FITNESS FOR ANY PURPOSE  
 """
 
-version = 0.4
+version = 0.5
 
 import argparse
 import os
@@ -110,9 +110,12 @@ def number_and_split_pages(inputfile: str, pagespec : list, verbose: bool, debug
         pagenumber_text = " " + str(int(1 + pn)) + "/" + str(number_pages)
         page = pages[pn]
         writer.add_page(page)
+        annotation_width = 42
+        if number_pages >= 100:
+            annotation_width = 56
         annotation_top = FreeText(
             text = pagenumber_text,
-            rect = (page_width - 39, page_height - crop_top - 43,
+            rect = (page_width - annotation_width + 1, page_height - crop_top - 43,
                     page_width + 1, page_height - crop_top - 25),
             border_color = pagenumbers_colour,
             background_color = "ffffff"
@@ -121,7 +124,8 @@ def number_and_split_pages(inputfile: str, pagespec : list, verbose: bool, debug
         writer.add_annotation(page_number = i, annotation = annotation_top)
         annotation_bottom = FreeText(
             text = pagenumber_text,
-            rect=(page_width - 40, crop_foot + 22, page_width + 1, crop_foot + 3),
+            rect=(page_width - annotation_width, crop_foot + 22,
+                  page_width + 1, crop_foot + 3),
             border_color = "ffffff",
             background_color = pagenumbers_colour
         )
