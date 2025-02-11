@@ -47,7 +47,7 @@ License: MIT License
 NO WARRANTY OF FITNESS FOR ANY PURPOSE  
 """
 
-version = 0.5
+version = 0.6
 
 import argparse
 import os
@@ -59,7 +59,9 @@ import subprocess
 import tempfile
 from shutil import which
 
-def number_and_split_pages(inputfile: str, pagespec : list, verbose: bool, debug: bool):
+def number_and_split_pages(inputfile: str, pagespec : list,
+                           ar : float, cl : float, mo : float,
+                           pncol: str, verbose: bool, debug: bool):
     """
     The main work is done by this function.
 
@@ -68,7 +70,15 @@ def number_and_split_pages(inputfile: str, pagespec : list, verbose: bool, debug
     inputfile : str
         the path to the PDF file that will be processed
     pagespec : list
-        a list of two str values         
+        a list of two str values
+    ar : float
+        desired aspect ratio (width/height) of resulting landscape pages
+    cl : float
+        the amount to crop from the left margin of esch page
+    mo : float
+        minimum overlap between top and bottom halves of a page
+    pncol : str
+        a hexadecimal colour code for marginal page-numbering 
     verbose : bool
         provide commentary when run
     debug : bool
@@ -77,8 +87,8 @@ def number_and_split_pages(inputfile: str, pagespec : list, verbose: bool, debug
     """
     
     if verbose:
-        print("Adding marginal page-number annotations, top and bottom...")
-    pagenumbers_colour = "009900"
+        print("Adding marginal page-number and overlap annotations...")
+    pagenumbers_color = pncol
     reader = PdfReader(inputfile)
     writer = PdfWriter()
     number_pages = len(reader.pages)
@@ -94,17 +104,17 @@ def number_and_split_pages(inputfile: str, pagespec : list, verbose: bool, debug
     page_width = bb[2]
     page_height = bb[3]
     half_height = bb[3] / 2
-    crop_left = 35
-    ## no cropping is done on the right margin!
-    crop_top_max = 35
-    crop_foot_max = crop_top_max - 10  ## usually leaves page number in footer
-    ## Those maximum crop values will be reduced, depending on the input page size. 
+    crop_left = cl
+    ## No cropping is done on the right margin!
     cropped_width = page_width - crop_left
-    aspect_ratio = 209 / 156
-    ## The reMarkable2 landscape screen is ~209x157mm, so 209:156 should always fit.
-    crop_reduction = (cropped_width / aspect_ratio) - half_height + 10
-    crop_top = max(0, crop_top_max - crop_reduction)
-    crop_foot = max(0, crop_foot_max - crop_reduction)
+    half_overlap = mo / 2
+    aspect_ratio = ar
+    ## Determine the top-and-bottom cropping needed to get the required aspect ratio:
+    crop_tb = half_height + half_overlap - (cropped_width / aspect_ratio)
+    ## If less than zero vertical cropping is needed, increase the overlap:
+    if crop_tb < 0:
+        half_overlap = half_overlap - crop_tb
+        crop_tb = 0
     for i in range(len(pagerange)):
         pn = pagerange[i]
         pagenumber_text = " " + str(int(1 + pn)) + "/" + str(number_pages)
@@ -115,26 +125,27 @@ def number_and_split_pages(inputfile: str, pagespec : list, verbose: bool, debug
             annotation_width = 56
         annotation_top = FreeText(
             text = pagenumber_text,
-            rect = (page_width - annotation_width + 1, page_height - crop_top - 43,
-                    page_width + 1, page_height - crop_top - 25),
-            border_color = pagenumbers_colour,
+            rect = (page_width - annotation_width + 1, page_height - crop_tb - 43,
+                    page_width + 1, page_height - crop_tb - 25),
+            border_color = pagenumbers_color,
             background_color = "ffffff"
         )
-        annotation_top.flags = 4  ## for "printable" annotation
+        annotation_top.flags = 4
         writer.add_annotation(page_number = i, annotation = annotation_top)
         annotation_bottom = FreeText(
             text = pagenumber_text,
-            rect=(page_width - annotation_width, crop_foot + 22,
-                  page_width + 1, crop_foot + 3),
+            rect=(page_width - annotation_width, crop_tb + 22,
+                  page_width + 1, crop_tb + 3),
             border_color = "ffffff",
-            background_color = pagenumbers_colour
+            background_color = pagenumbers_color
         )
         annotation_bottom.flags = 4
         writer.add_annotation(page_number = i, annotation = annotation_bottom)
         annotation_overlap = Line(
-            p1 = (page_width - 3, half_height + 15),
-            p2 = (page_width - 3, half_height - 25),
-            rect = (page_width - 3, half_height + 15, page_width - 3, half_height - 25)
+            p1 = (page_width - 3, half_height + half_overlap),
+            p2 = (page_width - 3, half_height - half_overlap),
+            rect = (page_width - 3, half_height + half_overlap,
+                    page_width - 3, half_height - half_overlap)
         )
         annotation_overlap.flags = 4
         writer.add_annotation(page_number = i, annotation = annotation_overlap)
@@ -167,20 +178,24 @@ def number_and_split_pages(inputfile: str, pagespec : list, verbose: bool, debug
     if verbose:
         print("...DONE")
 
-    ## Next we split each page into top and bottom halves, with a useful overlap: 
+    ## Next we split each page into top and bottom halves, with the required overlap: 
     if verbose:
         print("Splitting the pages...")
     reader_top = PdfReader(temp2.name)
     reader_bottom = PdfReader(temp2.name)
     writer2 = PdfWriter()
-    for i in range(len(pagerange)): # range(len(reader_top.pages)):
+    for i in range(len(pagerange)):
         page_top = reader_top.pages[i]
         page_bottom = reader_bottom.pages[i]
-        page_top.cropbox = pdf.generic.RectangleObject([crop_left, half_height - 25,
-                                                        page_width, page_height -crop_top])
+        page_top.cropbox = pdf.generic.RectangleObject([crop_left,
+                                                        half_height - half_overlap,
+                                                        page_width,
+                                                        page_height - crop_tb])
         writer2.add_page(page_top)
-        page_bottom.cropbox = pdf.generic.RectangleObject([crop_left, crop_foot,
-                                                           page_width, half_height + 15])
+        page_bottom.cropbox = pdf.generic.RectangleObject([crop_left,
+                                                           crop_tb,
+                                                           page_width,
+                                                           half_height + half_overlap])
         writer2.add_page(page_bottom)
     if verbose:
         print("...DONE")
@@ -208,6 +223,22 @@ def main():
     parser.add_argument("-p", "--pagespec", type = str,
                         help = "a page range such as '2-5' or '2-' or '-5' (default: '1-')",
                         default = "1-")
+    parser.add_argument("--ar", type = float,
+                        help = "the aspect ratio (width/height) of the resulting " +
+                               "PDF pages (default: 1.34)",
+                        default = 1.34)
+    parser.add_argument("--cl", type = float,
+                        help = "the amount (in pt) to crop from the left margin of " +
+                               "each page (default: 35)",
+                        default = 35)
+    parser.add_argument("--mo", type = float,
+                        help = "the minimum required overlap (pt) between top and bottom " +
+                               "parts of pages (default: 40)",
+                        default = 40)
+    parser.add_argument("--pncol", type = str,
+                        help = "a 6-digit hexadecimal colour for the marginal " +
+                        "page numbering (default: '006600')",
+                        default = "006600")
     parser.add_argument("-v", "--verbose", action = 'store_true',
                         help = "provide brief commentary")
     parser.add_argument("-d", "--debug", action = 'store_true',
@@ -232,10 +263,14 @@ def main():
               " (or equivalently --pp " + possibly_meant + ")?")
         os._exit(1)
     if len(pagespec) != 2:
-        print("Invalid page range specification: aborting now.")
+        print("Invalid page range specification: aborting with no output file written.")
         os._exit(1)
     outputfile = number_and_split_pages(inputfile = os.path.abspath(args.inputfile),
                                         pagespec = pagespec,
+                                        ar = args.ar,
+                                        cl = args.cl,
+                                        mo = args.mo,
+                                        pncol = args.pncol,
                                         verbose = verbose,
                                         debug = debug)
     return(outputfile)

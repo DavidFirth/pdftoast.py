@@ -10,6 +10,8 @@ The two applications that have emerged in my own work are the following.
 1.  Uploading a paper to a _reMarkable 2_ or similar tablet device for reading and/or annotation, with text displayed at a good size and with no scrolling needed.  In fact, writing this script was motivated by my having started to play with a _reMarkable 2_, whose e-ink display makes scrolling a severe annoyance due to its constant refreshing of the screen while scrolling.  I now find reading and annotating PDFs on the _reMarkable 2_ much easier --- fun, even! --- when the PDF has been processed by `pdftoast.py` and is viewed in landscape mode on the tablet.  On the _reMarkable 2_, that view of a document has the text at a size that's slightly bigger than it would be in a printed copy of the paper.  And the right margin gives enough space, still, for short annotations --- with space for longer annotations still available by scrolling.  (All testing on the _reMarkable 2_ has been done with that tablet's software version 3.16.)
 2.  Discussing a paper with students or colleagues, using a landscape-oriented screen in presentation mode to display the paper (online, or on my desk, or with a projector).  The landscape-oriented PDF made by `pdftoast.py` makes decent use of the screen space, with no scrolling and with page numbers always visible.
 
+The default settings in the script are good for making 4:3 landscape output, from portrait-oriented input documents at either ISO A4 or US Letter page size.  For other input or output sizes/shapes, command-line options allow the user to over-ride the default aspect ratio, left-margin crop and top/bottom overlap settings. (The default aspect ratio is actually 1.34, which is deliberately a tiny bit more than 4/3.  This ensures smooth operation on a _reMarkable2_ device in its 'fit-to-width' landscape mode, without any scrolling.)
+
 ## Using the script
 
 If the dependencies are all installed (see below) and the `pdftoast.py` script has been placed in the user's path, then at the shell prompt:
@@ -54,7 +56,7 @@ pdftoast.py -v 2312.10548v1.pdf -p 2-3
 The output then seen in the terminal is this:
 ```
 /home/david/Downloads$ pdftoast.py -v 2312.10548v1.pdf
---- This is pdftoast.py version 0.1 ---
+--- This is pdftoast.py version 0.6 ---
 Adding marginal page-number annotations, top and bottom...
 ...DONE
 Flattening the annotated PDF...
